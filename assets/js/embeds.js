@@ -19,8 +19,19 @@
     var disponible = marco.clientWidth;
     /* Ancho cero = todavia no hay layout (pestana oculta, panel colapsado,
        vista previa de impresion). Sin esto se escribiria scale(0) y encima
-       quedaria memorizado como el ancho vigente. */
-    if (!disponible) return;
+       quedaria memorizado como el ancho vigente. Se reintenta por frame en
+       vez de confiar solo en el ResizeObserver, que no siempre avisa cuando
+       el contenedor pasa de cero a su tamano real; el tope evita quedarse
+       girando si el elemento nunca llega a ser visible. */
+    if (!disponible) {
+      var n = (marco._intentos || 0) + 1;
+      marco._intentos = n;
+      if (n < 120 && window.requestAnimationFrame) {
+        requestAnimationFrame(function () { escalar(caja, ancho, alto); });
+      }
+      return;
+    }
+    marco._intentos = 0;
     /* El ResizeObserver vigila el mismo marco cuya altura se ajusta aqui, asi
        que sin este guardia cada ajuste se dispara a si mismo. Solo el ancho
        importa: si no cambio, no hay nada que recalcular. */
