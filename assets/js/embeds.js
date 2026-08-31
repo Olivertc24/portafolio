@@ -67,6 +67,7 @@
     var caja = document.createElement("div");
     caja.style.width = t.ancho + "px";
     caja.style.height = t.alto + "px";
+    caja.style.position = "relative";
     m.appendChild(caja);
 
     var ajustar = function () { escalar(caja, t.ancho, t.alto); };
@@ -74,12 +75,36 @@
     if (window.ResizeObserver) new ResizeObserver(ajustar).observe(m);
     window.addEventListener("resize", ajustar);
 
-    function cargar(i) {
-      caja.innerHTML = "";
-      var espera = document.createElement("div");
-      espera.className = "cargando";
-      espera.innerHTML = '<span class="girador"></span>Cargando desde Tableau Public…';
-      m.appendChild(espera);
+    /* Cada dashboard se monta UNA vez y despues solo se muestra u oculta.
+       Recrear el <tableau-viz> en cada clic costaba ~7 s de recarga; asi el
+       primer clic sobre una pestana la carga y los siguientes son
+       instantaneos. Se montan bajo demanda, no las cuatro de golpe, para no
+       castigar la carga inicial de la pagina. */
+    var montadas = [];
+
+    function espera(on) {
+      var e = m.querySelector(".cargando");
+      if (on && !e) {
+        e = document.createElement("div");
+        e.className = "cargando";
+        e.innerHTML = '<span class="girador"></span>Cargando desde Tableau Public…';
+        m.appendChild(e);
+      } else if (!on && e) {
+        e.remove();
+      }
+    }
+
+    function mostrar(i) {
+      montadas.forEach(function (el, j) {
+        if (el) el.style.display = (j === i) ? "block" : "none";
+      });
+      if (montadas[i]) { espera(false); return; }
+
+      var cont = document.createElement("div");
+      cont.style.width = "100%";
+      cont.style.height = "100%";
+      cont.style.opacity = "0";
+      cont.style.transition = "opacity .4s";
 
       var viz = document.createElement("tableau-viz");
       viz.setAttribute("src", t.base + "/" + vistas[i].ruta);
@@ -88,17 +113,18 @@
       viz.setAttribute("toolbar", "bottom");
       viz.setAttribute("hide-tabs", "true");
       viz.setAttribute("device", "desktop");
-      viz.style.opacity = "0";
-      viz.style.transition = "opacity .4s";
-      caja.appendChild(viz);
+      cont.appendChild(viz);
+      caja.appendChild(cont);
+      montadas[i] = cont;
 
-      /* Tableau Public tarda varios segundos y un marco en blanco parece un
-         error. El indicador se retira cuando la vista avisa que ya es
-         interactiva, o a los 25 s por si el evento no llega. */
+      espera(true);
+      /* Tableau Public tarda varios segundos y un marco vacio parece un error.
+         El indicador se retira cuando la vista avisa que ya es interactiva, o
+         a los 25 s por si el evento no llega. */
       var listo = function () {
-        if (!espera.parentNode) return;
-        espera.remove();
-        viz.style.opacity = "1";
+        if (montadas.indexOf(cont) === -1) return;
+        espera(false);
+        cont.style.opacity = "1";
       };
       viz.addEventListener("firstinteractive", listo);
       setTimeout(listo, 25000);
@@ -121,14 +147,14 @@
             o.setAttribute("aria-selected", "false");
           });
           b.setAttribute("aria-selected", "true");
-          cargar(i);
+          mostrar(i);
         });
         barra.appendChild(b);
       });
       m.parentNode.insertBefore(barra, m);
     }
 
-    cargar(0);
+    mostrar(0);
     apiTableau();
     nodo.classList.add("en-vivo");
   }
