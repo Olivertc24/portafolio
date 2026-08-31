@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero Comercial de AvilaTec · Tableau</title>
+<meta name="description" content="Tablero de cuatro pestañas sobre 1,6 millones de líneas de factura, con el workbook de Tableau generado por código desde Python.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Tablero Comercial de AvilaTec · Tableau">
+<meta property="og:description" content="Cuatro pestañas sobre 1,6 M de líneas: venta y margen, mezcla, cobranza y devoluciones.">
+<meta property="og:image" content="../assets/img/tableau-tablero-comercial.png">
+<link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;650&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/estilo.css">
+<script src="../assets/js/config.js"></script>
+</head>
+<body>
+<a class="saltar" href="#principal">Saltar al contenido</a>
+
+<header class="cabecera">
+  <div class="contenedor">
+    <a class="marca" href="../">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="2"  y="18" width="6" height="12" rx="1.5" fill="#4da978"/>
+        <rect x="12" y="11" width="6" height="19" rx="1.5" fill="#008853"/>
+        <rect x="22" y="4"  width="6" height="26" rx="1.5" fill="currentColor"/>
+      </svg>
+      <span>
+        <span data-sitio-nombre>Oliver Triveño</span>
+        <small data-sitio-lema>Análisis de datos</small>
+      </span>
+    </a>
+    <nav class="nav">
+      <a class="ocultable" href="../#proyectos">Proyectos</a>
+      <a class="ocultable" href="avilatec-pronostico.html">Pronóstico</a>
+      <a href="../#contacto">Contacto</a>
+      <button class="tema" type="button" aria-label="Cambiar de tema">
+        <svg class="luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main id="principal" class="caso">
+
+  <section class="caso-hero">
+    <div class="contenedor">
+      <p class="migas"><a href="../">Inicio</a> · <a href="../#proyectos">Proyectos</a> · Tablero Comercial</p>
+      <p class="ojal">AvilaTec · Tableau</p>
+      <h1>Tablero Comercial</h1>
+      <p class="lede">
+        Cuatro pestañas sobre 1,6 millones de líneas de factura. Responden en este orden:
+        cómo va la venta, por qué se cae el margen, cómo entra el dinero y cuánto vuelve
+        por la puerta. El workbook no se armó a mano: se <strong>genera por código</strong>.
+      </p>
+
+      <dl class="ficha-tecnica">
+        <div><dt>Rol</dt><dd>Modelo de datos, análisis y diseño del tablero</dd></div>
+        <div><dt>Herramientas</dt><dd>Tableau Desktop · Hyper · Python · SQLite</dd></div>
+        <div><dt>Grano</dt><dd>Línea de factura · 1.609.748 filas</dd></div>
+        <div><dt>Período</dt><dd>ene 2023 → ago 2026</dd></div>
+      </dl>
+
+      <div class="acciones">
+        <a class="boton primario" href="#demo">Ver el tablero</a>
+        <a class="boton" href="avilatec-pronostico.html">Caso siguiente: el pronóstico</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion sin-linea" id="demo">
+    <div class="contenedor">
+      <figure class="incrustacion" data-demo="tableau">
+        <div class="marco">
+          <div class="respaldo">
+            <img src="../assets/img/tableau-tablero-comercial.png" alt="Tablero Comercial de AvilaTec: KPI de venta neta, margen, ticket y facturas; tendencia mensual; comparativo anual; ranking de tiendas coloreado por margen; mezcla por categoría, canal y ciudad.">
+            <div class="velo">
+              <strong>Demo en vivo pendiente.</strong>
+              <span>Publica el workbook en Tableau Public y pega la URL en <code>assets/js/config.js</code>.</span>
+            </div>
+          </div>
+        </div>
+        <figcaption>
+          Las cuatro pestañas, en vivo desde Tableau Public. Los cuatro filtros de arriba
+          (año, tienda, canal, categoría) son globales y están enlazados entre sí.
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="contenedor">
+      <div class="prosa">
+        <p class="ojal">El punto de partida</p>
+        <h2>Una sola tabla plana, a propósito</h2>
+        <p>
+          La fuente es <code>Extract.Ventas</code>, un extracto Hyper a grano de línea de
+          factura. Un único grano evita el fan-out de las medidas: en cuanto se unen ventas y
+          cobros en la misma tabla, cada importe se multiplica por el número de filas del otro
+          lado y todos los totales quedan inflados sin avisar.
+        </p>
+        <p>
+          El precio de esa decisión es explícito: las metas mensuales quedan fuera del tablero
+          porque viven a otro grano (tienda × mes). Cobros y devoluciones tampoco se mezclan —
+          cada uno tiene su propia fuente dentro del mismo <code>.hyper</code>.
+        </p>
+
+        <div class="destacado">
+          <p>
+            Once campos calculados, diez hojas y un dashboard de 1500×900. Sin filtros:
+            $173.400.935 de venta neta, 15,1 % de margen, ticket de $186 y 931.413 facturas.
+            Esos cuatro números son el control: si tras un cambio no cuadran, el cambio está mal.
+          </p>
+        </div>
+      </div>
+
+      <h2 style="margin-top:3rem">Las cuatro pestañas</h2>
+      <div class="tabla-envoltorio">
+        <table>
+          <thead>
+            <tr><th>Pestaña</th><th>Qué pregunta responde</th><th>El hallazgo</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Tablero Comercial</strong></td>
+              <td>Cómo va la venta</td>
+              <td>KPI, tendencia, comparativo anual, ranking de tiendas y mezcla por categoría, canal y ciudad</td>
+            </tr>
+            <tr>
+              <td><strong>Mezcla y margen</strong></td>
+              <td>Por qué cae el margen</td>
+              <td>−1,64 pp entre 2023 y 2025, y el <strong>87% viene del cambio de mezcla</strong>, no de costos ni descuentos</td>
+            </tr>
+            <tr>
+              <td><strong>Cobranza y exposición</strong></td>
+              <td>Cómo entra el dinero</td>
+              <td>El cobro diferido pasó de 3,35% a <strong>13,29%</strong>: se cuadruplicó en tres años</td>
+            </tr>
+            <tr>
+              <td><strong>Devoluciones</strong></td>
+              <td>Cuánto vuelve y cuánto se pierde</td>
+              <td>Tasa de 2,49%, pero <strong>53% de lo devuelto no vuelve al inventario</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="galeria">
+        <figure>
+          <img src="../assets/img/tableau-mezcla-margen.png" alt="Pestaña Mezcla y margen: cuadrante de venta contra porcentaje de margen por categoría, barras de puntos de peso ganados o perdidos entre 2023 y 2026, tabla resaltada de peso por categoría y año, y serie mensual del attach de accesorios." loading="lazy" width="2000" height="1200">
+          <figcaption><strong>Mezcla y margen.</strong> El cuadrante va en un solo tono con etiquetas directas: en una dispersión cualquier par de marcas puede quedar contiguo, y ahí la paleta solo aguanta tres series bajo daltonismo.</figcaption>
+        </figure>
+        <figure>
+          <img src="../assets/img/tableau-cobranza.png" alt="Pestaña Cobranza y exposición: KPI de cobrado, porcentaje en divisas, IGTF y cobro diferido; cobrado por moneda y medio de pago; serie mensual del cobro diferido; y origen del IGTF." loading="lazy" width="2000" height="1200">
+          <figcaption><strong>Cobranza y exposición.</strong> Vive sobre una segunda fuente de datos: los cobros son otro grano, así que van en su propia tabla dentro del mismo <code>.hyper</code>.</figcaption>
+        </figure>
+        <figure>
+          <img src="../assets/img/tableau-devoluciones.png" alt="Pestaña Devoluciones: KPI de monto devuelto, tasa sobre venta neta y monto que no vuelve al inventario; devuelto por motivo anidado por destino; tasa por categoría; y tasa mensual." loading="lazy" width="2000" height="1200">
+          <figcaption><strong>Devoluciones.</strong> Tercera fuente: la unión agregada de ventas y devoluciones. Una tasa necesita numerador y denominador en la misma fuente, y Tableau no cruza agregaciones entre fuentes.</figcaption>
+        </figure>
+      </div>
+
+      <div class="prosa">
+        <h3>El margen no se cayó por lo que parecía</h3>
+        <p>
+          La caída de 1,64 pp del margen bruto tiene una explicación tentadora — costos o
+          descuentos — y es falsa. Descomponiendo la variación, solo <strong>−0,22 pp</strong>
+          vienen de que las categorías perdieran margen propio; <strong>−1,42 pp</strong> vienen
+          de que se vende otra cosa. Computación ganó 15,4 pp de peso con apenas 8,3% de margen,
+          mientras Telefonía perdía 11,3 pp.
+        </p>
+        <p>
+          La palanca operativa que salió de ahí es el <em>attach</em> de accesorios: de las
+          facturas con equipo, cuántas se llevan un accesorio. Cayó de 27,98% a 23,07% y se
+          recuperó a 25,86%, con las líneas por factura clavadas en 1,73. No es que el carrito
+          encogiera: es que dejaron de agregar el accesorio.
+        </p>
+
+        <h3>Dos cifras que se confunden en cobranza</h3>
+        <p>
+          El <strong>24% de los cobros</strong> son cuotas, pero eso es solo el
+          <strong>9,1% del monto</strong>: son muchos cobros pequeños. Para capital de trabajo
+          importa la segunda. El tablero muestra las dos juntas justamente para que nadie cite
+          la que no es.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="contenedor">
+      <div class="prosa">
+        <p class="ojal">Diseño</p>
+        <h2>El color no es decoración</h2>
+        <p>
+          La paleta se derivó en OKLCH y el orden de los slots no es estético: es el mecanismo
+          de seguridad para daltonismo. Se enumeraron órdenes y se eligió el que maximiza el
+          peor par adyacente — dE 16,2 bajo protanopia y deuteranopia, holgado sobre el piso de 8.
+        </p>
+        <ul>
+          <li><strong>Los años son ordinales</strong>, no categorías sueltas: van en una rampa de un solo tono, de claro a oscuro, para que el orden se vea en el color.</li>
+          <li><strong>El comparativo anual codifica el año dos veces</strong>, por tono y por grosor de línea. El grosor sobrevive intacto al daltonismo, así que el año en curso se distingue aunque el tono no se perciba.</li>
+          <li><strong>El signo lo lleva la dirección de la barra</strong>, no un segundo color. Así el tablero sigue siendo monocromo sin perder el «ganó / perdió».</li>
+          <li><strong>Las barras de una sola serie</strong> van todas en el verde de marca. Colorearlas por su valor gasta el canal de identidad repitiendo lo que ya dice el largo de la barra.</li>
+        </ul>
+        <p>
+          La alternativa habitual —años viejos en gris, el actual en color— se descartó midiendo:
+          aclarando los grises lo justo para que un daltónico separe el verde de 2026 del gris de
+          2025, el gris más claro cae a 1,81:1 contra el fondo. No hay banda de luminosidad para
+          tres grises más un verde.
+        </p>
+      </div>
+
+      <figure class="galeria" style="grid-template-columns:1fr">
+        <img src="../assets/img/muestrario-color.png" alt="Lámina del sistema de color: slots de la paleta categórica, rampa de años y rampa de margen, con sus contrastes y su simulación bajo daltonismo." loading="lazy">
+        <figcaption>El sistema de color completo, con las comprobaciones que lo validan.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="contenedor">
+      <div class="prosa">
+        <p class="ojal">Construcción</p>
+        <h2>El workbook se escribe, no se arrastra</h2>
+        <p>
+          Un <code>.twb</code> es XML. Todo el tablero —fuente de datos, campos calculados,
+          hojas, dashboard, estilos— se genera desde Python, así que rehacerlo entero es un
+          comando y cualquier cambio queda versionado como texto.
+        </p>
+<pre><code>python3 construir_hyper.py   # extracto Hyper desde Parquet
+python3 construir_logo.py    # el logo, en los colores de la paleta
+python3 construir_twb.py     # el workbook .twb (XML)
+python3 empaquetar.py        # .twb + .hyper + logo -> .twbx</code></pre>
+        <p>
+          Lo caro de este camino es el diagnóstico: Tableau valida el XML con dureza y
+          <strong>enmascara el error en el log</strong> (<code>error-details=["*****"]</code>),
+          así que un archivo mal formado solo produce «no fue posible finalizar la carga». El
+          diálogo de error de la aplicación, en cambio, lo muestra entero, con número de línea
+          y hasta el modelo de contenido esperado. Capturar ese diálogo automáticamente fue lo
+          que hizo viable el ciclo.
+        </p>
+
+        <div class="nota">
+          <p>
+            <strong>El fallo silencioso es peor que el rechazo.</strong> Una regla de estilo
+            válida cuyo campo o valor no casa se ignora sin avisar. Como la paleta continua por
+            defecto de Tableau es azul, una rampa azul ignorada se parece muchísimo a una rampa
+            azul aplicada. La única comprobación honesta es medir el píxel del render.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="contenedor centrado">
+      <h2>Y ahora, qué viene</h2>
+      <p class="intro" style="margin:1rem auto 2rem">
+        El tablero cierra la pregunta de qué pasó. La siguiente es qué va a pasar.
+      </p>
+      <div class="acciones" style="justify-content:center">
+        <a class="boton primario" href="avilatec-pronostico.html">Pronóstico de demanda en R →</a>
+        <a class="boton" href="../#proyectos">Todos los proyectos</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pie-sitio">
+  <div class="contenedor">
+    <div>
+      <p style="margin-bottom:.4rem"><strong data-sitio-nombre>Oliver Triveño</strong> · <span data-anio>2026</span></p>
+      <p class="aviso">
+        AvilaTec es una empresa ficticia y sus datos son 100% sintéticos. La única información
+        real del proyecto es el tipo de cambio publicado por el BCV.
+      </p>
+    </div>
+    <nav aria-label="Pie">
+      <a href="../">Inicio</a>
+      <a href="avilatec-pronostico.html">Pronóstico de demanda</a>
+      <a href="mailto:olivertc43@gmail.com" data-sitio-correo>olivertc43@gmail.com</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/js/sitio.js"></script>
+<script src="../assets/js/embeds.js"></script>
+</body>
+</html>

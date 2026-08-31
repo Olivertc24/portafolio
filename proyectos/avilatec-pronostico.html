@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pronóstico de demanda de AvilaTec · R + fable</title>
+<meta name="description" content="26 series diarias modeladas con ARIMA sobre log(venta), calendario venezolano como regresor y detección de anomalías del mismo ajuste. MAPE 10,1% en la cadena.">
+<meta name="color-scheme" content="light dark">
+<meta property="og:title" content="Pronóstico de demanda de AvilaTec · R + fable">
+<meta property="og:description" content="ARIMA sobre 26 series diarias, validado contra línea base en un holdout de 90 días.">
+<meta property="og:image" content="../assets/img/shiny-pronostico.png">
+<link rel="icon" href="../assets/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;650&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/estilo.css">
+<script src="../assets/js/config.js"></script>
+</head>
+<body>
+<a class="saltar" href="#principal">Saltar al contenido</a>
+
+<header class="cabecera">
+  <div class="contenedor">
+    <a class="marca" href="../">
+      <svg viewBox="0 0 32 32" aria-hidden="true">
+        <rect x="2"  y="18" width="6" height="12" rx="1.5" fill="#4da978"/>
+        <rect x="12" y="11" width="6" height="19" rx="1.5" fill="#008853"/>
+        <rect x="22" y="4"  width="6" height="26" rx="1.5" fill="currentColor"/>
+      </svg>
+      <span>
+        <span data-sitio-nombre>Oliver Triveño</span>
+        <small data-sitio-lema>Análisis de datos</small>
+      </span>
+    </a>
+    <nav class="nav">
+      <a class="ocultable" href="../#proyectos">Proyectos</a>
+      <a class="ocultable" href="avilatec-tablero.html">Tablero</a>
+      <a href="../#contacto">Contacto</a>
+      <button class="tema" type="button" aria-label="Cambiar de tema">
+        <svg class="luna" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg class="sol" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main id="principal" class="caso">
+
+  <section class="caso-hero">
+    <div class="contenedor">
+      <p class="migas"><a href="../">Inicio</a> · <a href="../#proyectos">Proyectos</a> · Pronóstico de demanda</p>
+      <p class="ojal">AvilaTec · R</p>
+      <h1>Pronóstico de demanda diaria</h1>
+      <p class="lede">
+        26 series —la cadena, cada tienda y cada categoría— proyectadas a 90 días con su
+        intervalo. Y del mismo ajuste, sin reentrenar, sale el detector de días raros.
+      </p>
+
+      <dl class="ficha-tecnica">
+        <div><dt>Rol</dt><dd>Modelado, validación y aplicación</dd></div>
+        <div><dt>Herramientas</dt><dd>R · fable · feasts · Shiny · Python</dd></div>
+        <div><dt>Series</dt><dd>26 diarias · 1.337 días cada una</dd></div>
+        <div><dt>Precisión</dt><dd>MAPE 10,1% · MASE 0,49</dd></div>
+      </dl>
+
+      <div class="acciones">
+        <a class="boton primario" href="#demo">Abrir el explorador</a>
+        <a class="boton" href="avilatec-tablero.html">Caso anterior: el tablero</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion sin-linea" id="demo">
+    <div class="contenedor">
+      <figure class="incrustacion" data-demo="shiny">
+        <div class="marco">
+          <div class="respaldo">
+            <img src="../assets/img/shiny-pronostico.png" alt="Explorador del pronóstico en Shiny: selector de nivel y serie, gráfico de la serie diaria con el pronóstico y su intervalo del 80%, y tabla de precisión por serie.">
+            <div class="velo">
+              <strong>Demo en vivo pendiente.</strong>
+              <span>Despliega la app con <code>rsconnect::deployApp()</code> y pega la URL en <code>assets/js/config.js</code>.</span>
+            </div>
+          </div>
+        </div>
+        <figcaption>
+          Tres pestañas: pronóstico por serie, análisis de campañas y anomalías. La app lee las
+          salidas del ajuste — no reentrena nada en cada visita.
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="contenedor">
+      <div class="prosa">
+        <p class="ojal">La estructura</p>
+        <h2>Medida, no supuesta</h2>
+        <p>
+          Antes de elegir modelo hay que saber qué hay en la serie. La autocorrelación es
+          <strong>0,79 a un día, 0,76 a siete y 0,76 a 365</strong>: memoria corta, semanal y
+          anual, las tres presentes. Y los efectos de calendario son enormes.
+        </p>
+      </div>
+
+      <dl class="cifras">
+        <div><dt>Quincena</dt><dd>+19,6%</dd></div>
+        <div><dt>Sábado</dt><dd>+34%</dd></div>
+        <div><dt>Domingo</dt><dd>−36%</dd></div>
+        <div class="destacada"><dt>Feriado</dt><dd>−58%</dd></div>
+      </dl>
+
+      <div class="prosa">
+        <p>
+          De ahí sale el modelo: un <strong>ARIMA sobre <code>log(venta + 1)</code></strong> con
+          quincena, feriado y las seis campañas como regresores, más términos de Fourier para la
+          estacionalidad semanal (K=3) y anual (K=2). Las dos tiendas con menos de dos años de
+          historia van sin el término anual: no hay con qué estimarlo.
+        </p>
+
+        <h3>Las campañas no se pueden medir, pero sí usar</h3>
+        <p>
+          Ocupan siempre la misma ventana del calendario, así que su efecto causal es
+          inseparable de la estacionalidad — no hay contrafactual. Eso las inhabilita como
+          objeto de estudio y las vuelve <strong>perfectamente proyectables</strong> como
+          control. Incluirlas bajó el MAPE de la cadena de 12,4% a <strong>10,1%</strong>, el
+          MASE de 0,64 a 0,49, y corrigió un pronóstico que se iba +21% por encima del contraste
+          ingenuo: ahora queda a −2%.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="contenedor">
+      <div class="prosa">
+        <p class="ojal">Validación</p>
+        <h2>Tres candidatos, un holdout, y gana el que mide mejor</h2>
+        <p>
+          Los últimos 90 días se apartan y no se tocan. Sobre ellos compiten el modelo, una
+          variante y la línea base — SNAIVE, el mismo día de la semana anterior.
+        </p>
+      </div>
+
+      <div class="tabla-envoltorio">
+        <table>
+          <thead>
+            <tr><th>Modelo</th><th class="num">MAPE mediana</th><th class="num">MASE mediana</th></tr>
+          </thead>
+          <tbody>
+            <tr class="gana"><td>ARIMA, tendencia estocástica</td><td class="num">23,2%</td><td class="num">0,66</td></tr>
+            <tr><td>SNAIVE (línea base)</td><td class="num">34,1%</td><td class="num">1,00</td></tr>
+            <tr><td>ARIMA, tendencia determinista</td><td class="num">35,5%</td><td class="num">1,09</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="prosa">
+        <div class="destacado">
+          <p>
+            La variante de tendencia determinista resultó <strong>peor que no hacer nada</strong>.
+            Eso es exactamente para lo que sirve tener una línea base en la tabla.
+          </p>
+        </div>
+        <p>
+          Sobre la cadena completa el modelo elegido da <strong>MAPE 10,1% y MASE 0,49</strong>:
+          48% menos error que la línea base. Le gana en <strong>23 de 26 series</strong>, con
+          mejora mediana del 29%.
+        </p>
+        <p>
+          <strong>Dónde pierde</strong>, que también hay que decirlo: El Paraíso (−21%), Audio
+          (−17%) y Valencia Centro (−6%). Son series chicas y ruidosas donde la línea base es
+          difícil de batir.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="contenedor">
+      <div class="prosa">
+        <p class="ojal">Dos decisiones</p>
+        <h2>Las que cambian el número que se entrega</h2>
+
+        <h3>El punto es la mediana, no la media</h3>
+        <p>
+          Con transformación logarítmica, la media reajustada por sesgo se infla en horizontes
+          largos: a 90 días daba <strong>$30,9 M</strong> contra <strong>$26,6 M</strong> de la
+          mediana. La mediana es el punto honesto.
+        </p>
+
+        <h3>El intervalo de un total se simula, no se suma</h3>
+        <p>
+          Sumar los intervalos diarios no da el intervalo de la suma — ignora que los errores no
+          se mueven todos juntos. Con 1.000 trayectorias simuladas, el intervalo del 80% del
+          total a 90 días va de <strong>$15,5 M a $52,2 M</strong>; sumando los diarios habría
+          salido $13,7 M a $54,4 M, demasiado ancho.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="contenedor">
+      <div class="dos-columnas">
+        <div>
+          <p class="ojal">Aplicación</p>
+          <h2>Anomalías gratis</h2>
+          <p style="color:var(--texto-2)">
+            El residuo del mismo ajuste ya descuenta tendencia, día de la semana, quincena,
+            feriados y campañas. Lo que sobra es justamente lo que el calendario no explica. Se
+            estandariza con <strong>MAD</strong> y no con desviación típica, porque la desviación
+            la inflan las propias anomalías.
+          </p>
+          <p style="color:var(--texto-2)">
+            Salen <strong>600 de 31.286 días-serie (1,9%)</strong>, 200 de ellos fuertes. Antes
+            de controlar las campañas, el detector marcaba los arranques de campaña como
+            sorpresas: 273 días al año que estaban en el calendario.
+          </p>
+        </div>
+        <div>
+          <p class="ojal">Contraste</p>
+          <h2>La prueba de cordura</h2>
+          <p style="color:var(--texto-2)">
+            El pronóstico de 90 días (30 ago → 27 nov 2026) da <strong>$21,5 M</strong>. El mismo
+            período del año pasado, escalado por el crecimiento observado de enero-agosto (1,21×),
+            da <strong>$22,0 M</strong>. El modelo queda a <strong>−2%</strong>.
+          </p>
+          <p style="color:var(--texto-2)">
+            Ese período entra en temporada alta: noviembre y diciembre valen 2,2 veces el promedio
+            de enero-agosto todos los años. Un pronóstico que subiera poco sería el sospechoso.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="contenedor">
+      <div class="prosa">
+        <p class="ojal">Lo que no hace</p>
+        <h2>Limitaciones, dichas de frente</h2>
+        <ul>
+          <li>Solo se proyectan los <strong>feriados fijos</strong>. Carnaval y Semana Santa son móviles y quedan fuera: el modelo sobreestimará esos días.</li>
+          <li>El intervalo a 90 días sigue siendo ancho, de 16 a 29 millones. Es la consecuencia honesta de una tendencia estocástica sobre una serie que crece rápido; para decidir a corto plazo conviene mirar de 2 a 4 semanas.</li>
+          <li>Los datos de ventas son <strong>sintéticos</strong>. El modelo aprende las reglas del generador: el pipeline y la metodología son reales, los coeficientes no son un hallazgo de mercado.</li>
+        </ul>
+
+        <div class="nota">
+          <p>
+            <strong>Un detalle que costó caro:</strong> <code>fable</code> necesita
+            <code>urca</code> para el test de raíz unitaria del ARIMA. Sin ese paquete instalado,
+            <em>todos</em> los ajustes fallan en silencio y devuelven modelos nulos. Ponerle
+            <code>.safely = FALSE</code> a <code>model()</code> es lo que revela el error real.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="contenedor centrado">
+      <h2>El otro lado del sistema</h2>
+      <p class="intro" style="margin:1rem auto 2rem">
+        Este pronóstico se apoya en el mismo modelo de datos que alimenta el tablero.
+      </p>
+      <div class="acciones" style="justify-content:center">
+        <a class="boton primario" href="avilatec-tablero.html">← Tablero Comercial en Tableau</a>
+        <a class="boton" href="../#proyectos">Todos los proyectos</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="pie-sitio">
+  <div class="contenedor">
+    <div>
+      <p style="margin-bottom:.4rem"><strong data-sitio-nombre>Oliver Triveño</strong> · <span data-anio>2026</span></p>
+      <p class="aviso">
+        AvilaTec es una empresa ficticia y sus datos son 100% sintéticos. La única información
+        real del proyecto es el tipo de cambio publicado por el BCV.
+      </p>
+    </div>
+    <nav aria-label="Pie">
+      <a href="../">Inicio</a>
+      <a href="avilatec-tablero.html">Tablero Comercial</a>
+      <a href="mailto:olivertc43@gmail.com" data-sitio-correo>olivertc43@gmail.com</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="../assets/js/sitio.js"></script>
+<script src="../assets/js/embeds.js"></script>
+</body>
+</html>
