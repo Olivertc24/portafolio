@@ -53,7 +53,7 @@ window.CONFIG = {
        https://CUENTA.shinyapps.io/pronostico/
      -------------------------------------------------------- */
   shiny: {
-    url: "",
+    url: "https://1akx91-oliver-trive0o.shinyapps.io/avilatec-pronostico/",
     alto: 860
   }
 };
