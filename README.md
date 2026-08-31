@@ -71,22 +71,44 @@ El dashboard mide 1500×900 px fijos. `embeds.js` lo incrusta a tamaño natural 
 lo escala con `transform`, así que se ve completo en cualquier ancho de pantalla
 sin barras de scroll.
 
-### 2 · El pronóstico, en shinyapps.io
+### 2 · El pronóstico, en shinyapps.io — **ya desplegado**
 
-El plan gratuito da 5 aplicaciones y 25 horas activas al mes. Suficiente para un
-portafolio; si se agotan, la app duerme y la página vuelve a mostrar la captura.
+Está en `https://1akx91-oliver-trive0o.shinyapps.io/avilatec-pronostico/`.
+Para volver a desplegarlo, desde `avilatec/pronostico/`:
 
-```r
-install.packages("rsconnect")
-rsconnect::setAccountInfo(name = "...", token = "...", secret = "...")  # panel de shinyapps.io
-rsconnect::deployApp("../avilatec/pronostico", appName = "pronostico")
+```bash
+Rscript desplegar.R
 ```
 
-La app **no reentrena nada**: lee los CSV de `pronostico/salidas/`, que pesan
-poco. Hay que asegurarse de que esa carpeta y `www/` viajen en el deploy.
+Las credenciales se guardan a nivel de usuario, así que el token solo se pide
+la primera vez. Si hiciera falta enlazarlas de nuevo, lo cómodo es pegar en la
+consola de R el comando que da shinyapps.io en `Account › Tokens › Show`.
 
-Copiar la URL que devuelve el deploy —`https://CUENTA.shinyapps.io/pronostico/`—
-en `assets/js/config.js`, en `shiny.url`.
+**El despliegue sube solo los siete archivos que la app usa en runtime**, no la
+carpeta entera. `rsconnect` deduce las dependencias escaneando el directorio, y
+`modelar.R` declara `fable`, `fabletools`, `tsibble` y `lubridate` — paquetes
+pesados que la app nunca carga y que alargarían la compilación en el servidor
+para nada. Con la lista explícita quedan 52 dependencias y un bundle de 1,8 MB.
+
+Dos cosas que hubo que arreglar para que funcionara desplegada, y que conviene
+no deshacer:
+
+**Los datos de campañas viven dentro de la app.** `app.R` leía
+`../campanas/salidas/campanas.csv`, fuera de la carpeta. shinyapps.io solo sube
+lo que está dentro, así que allá ese archivo no existe y la pestaña de campañas
+habría salido vacía — sin error visible, porque hay un `file.exists()` de por
+medio. Ahora hay una copia en `datos/campanas.csv` y esa es la que viaja.
+
+**Los gráficos tienen un piso de ancho.** Si la app se incrusta en un iframe que
+todavía no tiene tamaño, Shiny le pasa 0 a `startPNG`, que muere con
+`invalid 'width' argument` y **deja el output pegado en error para siempre**:
+ni el resize posterior lo recupera. No se puede atajar dentro del `renderPlot`
+porque el dispositivo se crea antes de evaluar la expresión. Se resuelve en el
+CSS de la app, con `.shiny-plot-output { min-width:320px }`: dibuja estrecho y
+se redibuja al crecer.
+
+Ojo con el plan gratuito: 25 horas activas al mes. Si se agotan, la app duerme;
+basta con vaciar `shiny.url` en `config.js` y la página vuelve a la captura.
 
 ## Publicar en GitHub Pages
 
